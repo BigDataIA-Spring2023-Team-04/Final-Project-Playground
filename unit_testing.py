@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+import os
 
 import pytest
 import requests_mock
@@ -7,8 +8,13 @@ from utils.core_helpers import (
     get_issue_comments,
     get_open_issues,
     get_unique_owner_repo_pairs,
+    get_github_url
 )
 
+from navigation.adminworkarea import is_valid_github_link
+
+# Use a valid access token for testing
+access_token = os.environ.get("access_token")
 
 def test_get_open_issues_success():
     owner = "test_owner"
@@ -148,6 +154,61 @@ def test_get_issue_comments_invalid_token():
         result = get_issue_comments(issue_url, access_token)
         assert result == []
 
+def test_is_valid_github_link_success():
+    url = "https://api.github.com/repos/test_owner/test_repo"
+    access_token = "fake_token"
+
+    with requests_mock.Mocker() as m:
+        m.get(url, status_code=200)
+
+        result = is_valid_github_link(url, access_token)
+        assert result == "Success"
+
+
+def test_is_valid_github_link_fail():
+    url = "https://api.github.com/repos/test_owner/nonexistent_repo"
+    access_token = "fake_token"
+
+    with requests_mock.Mocker() as m:
+        m.get(url, status_code=404)
+
+        result = is_valid_github_link(url, access_token)
+        assert result == "Fail"
+
+
+def test_is_valid_github_link_invalid_token():
+    url = "https://api.github.com/repos/test_owner/test_repo"
+    access_token = "invalid_token"
+
+    with requests_mock.Mocker() as m:
+        m.get(url, status_code=401)
+
+        result = is_valid_github_link(url, access_token)
+        assert result == "Fail"
+
+def test_get_github_url_valid_1():
+    owner = "openai"
+    repo = "openai-python"
+    url = get_github_url(owner, repo)
+    assert is_valid_github_link(url, access_token) == "Success"
+
+def test_get_github_url_valid_2():
+    owner = "facebook"
+    repo = "Rapid"
+    url = get_github_url(owner, repo)
+    assert is_valid_github_link(url, access_token) == "Success"
+
+def test_get_github_url_valid_3():
+    owner = "twitter"
+    repo = "the-algorithm"
+    url = get_github_url(owner, repo)
+    assert is_valid_github_link(url, access_token) == "Success"
+
+def test_get_github_url_invalid():
+    owner = "nonexistent_owner"
+    repo = "nonexistent_repo"
+    url = get_github_url(owner, repo)
+    assert is_valid_github_link(url, access_token) == "Fail"
 
 if __name__ == "__main__":
     pytest.main()

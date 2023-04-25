@@ -124,3 +124,16 @@ def get_remaining_calls(access_token):
     else:
         st.write(f"Error: {response.status_code}")
         return None
+
+def get_github_url(owner, repo):
+    """
+    Given the owner and repo name, returns the corresponding GitHub URL.
+
+    Args:
+        owner (str): The owner of the repository.
+        repo (str): The name of the repository.
+
+    Returns:
+        str: The GitHub URL for the given owner and repo name.
+    """
+    return f"https://github.com/{owner}/{repo}"
